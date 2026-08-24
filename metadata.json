@@ -1,0 +1,7 @@
+{
+  "name": "GG Global",
+  "description": "Global Talent & Domain Operations corporate platform and Globally Unscripted executive interview series",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
