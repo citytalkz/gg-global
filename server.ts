@@ -66,11 +66,21 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Simple token storage for admin authentication
-  const validAdminTokens = new Set<string>([
-    "gg-admin-secret-token-2025",
-    "gg-global-master-admin-key-2025",
-  ]);
+  // Token storage for admin authentication.
+  // Tokens are only ever added via a successful /api/admin/login — no hardcoded backdoor tokens.
+  const validAdminTokens = new Set<string>();
+
+  // Admin credentials MUST come from environment variables (.env, or your host's env settings).
+  // The server refuses to start with default/missing credentials so a real login is always required.
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.error(
+      "FATAL: ADMIN_EMAIL and ADMIN_PASSWORD must be set as environment variables. " +
+      "Add them to your .env file (see .env.example) or your host's environment settings. Server not started."
+    );
+    process.exit(1);
+  }
 
   // Helper middleware for admin routes
   const requireAdmin = (req: Request, res: Response, next: () => void) => {
@@ -79,7 +89,7 @@ async function startServer() {
       return res.status(401).json({ error: "Unauthorized. Admin authentication required." });
     }
     const token = authHeader.split(" ")[1];
-    if (!validAdminTokens.has(token) && token !== "gg-global-master-admin-key-2025" && token !== "gg-admin-secret-token-2025") {
+    if (!validAdminTokens.has(token)) {
       return res.status(401).json({ error: "Invalid or expired session token." });
     }
     next();
@@ -335,12 +345,8 @@ async function startServer() {
   app.post("/api/admin/login", (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    // Secure authentication with friendly default credentials for reviewers: admin@ggglobal.com / ggglobal2025
-    if (
-      (email === "admin@ggglobal.com" && password === "ggglobal2025") ||
-      (email === "admin" && password === "admin")
-    ) {
-      const token = `token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const token = `token-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       validAdminTokens.add(token);
       return res.json({
         success: true,
@@ -349,7 +355,15 @@ async function startServer() {
       });
     }
 
-    return res.status(401).json({ error: "Invalid credentials. Use admin@ggglobal.com / ggglobal2025" });
+    // Never echo back the expected credentials in the response.
+    return res.status(401).json({ error: "Invalid credentials." });
+  });
+
+  // Optional: log out a token (clears it server-side so it can't be reused)
+  app.post("/api/admin/logout", requireAdmin, (req: Request, res: Response) => {
+    const token = req.headers.authorization!.split(" ")[1];
+    validAdminTokens.delete(token);
+    res.json({ success: true });
   });
 
   app.get("/api/admin/stats", requireAdmin, (req: Request, res: Response) => {

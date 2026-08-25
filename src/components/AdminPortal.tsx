@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Lock, 
-  Unlock, 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  CheckCircle2, 
-  Clock, 
-  Users, 
-  FileText, 
-  Layers, 
-  Eye, 
-  Search, 
-  RefreshCw, 
-  Download, 
-  Sparkles, 
-  X, 
-  Save, 
-  Check, 
+import {
+  Lock,
+  Unlock,
+  Plus,
+  Trash2,
+  Edit3,
+  CheckCircle2,
+  Clock,
+  Users,
+  FileText,
+  Layers,
+  Eye,
+  Search,
+  RefreshCw,
+  Download,
+  Sparkles,
+  X,
+  Save,
+  Check,
   ExternalLink,
   ChevronRight,
   TrendingUp,
@@ -46,9 +46,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   setCurrentView,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [tokenInput, setTokenInput] = useState('gg-admin-secret-token-2025');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authToken, setAuthToken] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'interviews' | 'leads' | 'cms' | 'ai'>('dashboard');
-  
+
   // Data states
   const [interviews, setInterviews] = useState<Interview[]>(initialInterviews);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -85,10 +89,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   }, [initialContent]);
 
   // Fetch leads when authenticated
-  const fetchLeads = async () => {
+  const fetchLeadsWithToken = async (tok: string) => {
     try {
       const res = await fetch('/api/leads', {
-        headers: { 'Authorization': `Bearer ${tokenInput}` }
+        headers: { 'Authorization': `Bearer ${tok}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -99,11 +103,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const fetchLeads = () => fetchLeadsWithToken(authToken);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (tokenInput.trim().length > 0) {
-      setIsAuthenticated(true);
-      fetchLeads();
+    setLoginError('');
+    setIsLoggingIn(true);
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailInput, password: passwordInput }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        setAuthToken(data.token);
+        setIsAuthenticated(true);
+        // fetchLeads is defined below and reads authToken via closure on next render;
+        // call it directly with the fresh token to avoid a stale-state race.
+        fetchLeadsWithToken(data.token);
+      } else {
+        setLoginError(data.error || 'Invalid credentials.');
+      }
+    } catch (err) {
+      setLoginError('Could not reach the server. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -127,7 +152,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tokenInput}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify(payload),
         });
@@ -137,7 +162,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tokenInput}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify(payload),
         });
@@ -161,7 +186,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     try {
       const res = await fetch(`/api/interviews/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${tokenInput}` }
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
         await onRefreshData();
@@ -177,7 +202,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenInput}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ status, notes }),
       });
@@ -196,7 +221,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenInput}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify(content),
       });
@@ -277,23 +302,40 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             <div>
               <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-                Admin Access Token / Key
+                Admin Email
+              </label>
+              <input
+                type="email"
+                value={emailInput}
+                onChange={e => setEmailInput(e.target.value)}
+                placeholder="you@ggglobal.in"
+                autoComplete="username"
+                className="w-full px-4 py-3 bg-[#0B0D11]/60 border border-white/15 rounded-xl focus:bg-[#0B0D11]/90 focus:outline-none focus:border-blue-400 text-white text-sm placeholder-gray-500 shadow-inner"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                Password
               </label>
               <input
                 type="password"
-                value={tokenInput}
-                onChange={e => setTokenInput(e.target.value)}
-                placeholder="Enter secret token"
+                value={passwordInput}
+                onChange={e => setPasswordInput(e.target.value)}
+                placeholder="Enter password"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 bg-[#0B0D11]/60 border border-white/15 rounded-xl focus:bg-[#0B0D11]/90 focus:outline-none focus:border-blue-400 text-white text-sm placeholder-gray-500 shadow-inner"
               />
-              <p className="text-[11px] text-gray-500 mt-1.5 font-light">Pre-filled with master administrative token for testing.</p>
+              {loginError && (
+                <p className="text-[11px] text-red-400 mt-1.5 font-medium">{loginError}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-white hover:bg-blue-500 text-[#0B0D11] hover:text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] text-xs uppercase tracking-widest active:scale-[0.98]"
+              disabled={isLoggingIn}
+              className="w-full py-3.5 bg-white hover:bg-blue-500 text-[#0B0D11] hover:text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] text-xs uppercase tracking-widest active:scale-[0.98] disabled:opacity-60"
             >
-              Sign In to Management Portal
+              {isLoggingIn ? 'Signing In...' : 'Sign In to Management Portal'}
             </button>
           </form>
 
@@ -318,7 +360,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-gray-200">
-      
+
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-2xl border border-white/15 shadow-xl relative overflow-hidden">
         <div className="glass-shine-overlay opacity-30"></div>
@@ -362,11 +404,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       <div className="flex items-center gap-2 border-b border-white/10 overflow-x-auto pb-2 scrollbar-none">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'dashboard'
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'dashboard'
               ? 'bg-white text-[#0B0D11] shadow-[0_0_15px_rgba(255,255,255,0.2)]'
               : 'glass-card hover:bg-white/10 text-gray-300 border border-white/10'
-          }`}
+            }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
           <span>Dashboard Overview</span>
@@ -374,11 +415,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         <button
           onClick={() => setActiveTab('interviews')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'interviews'
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'interviews'
               ? 'bg-white text-[#0B0D11] shadow-[0_0_15px_rgba(255,255,255,0.2)]'
               : 'glass-card hover:bg-white/10 text-gray-300 border border-white/10'
-          }`}
+            }`}
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Globally Unscripted CMS ({totalInterviews})</span>
@@ -386,11 +426,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         <button
           onClick={() => setActiveTab('leads')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'leads'
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'leads'
               ? 'bg-white text-[#0B0D11] shadow-[0_0_15px_rgba(255,255,255,0.2)]'
               : 'glass-card hover:bg-white/10 text-gray-300 border border-white/10'
-          }`}
+            }`}
         >
           <Users className="w-3.5 h-3.5" />
           <span>Enterprise Leads & CRM ({totalLeads})</span>
@@ -401,11 +440,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         <button
           onClick={() => setActiveTab('cms')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'cms'
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'cms'
               ? 'bg-white text-[#0B0D11] shadow-[0_0_15px_rgba(255,255,255,0.2)]'
               : 'glass-card hover:bg-white/10 text-gray-300 border border-white/10'
-          }`}
+            }`}
         >
           <Settings className="w-3.5 h-3.5" />
           <span>Website Copy CMS</span>
@@ -413,11 +451,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         <button
           onClick={() => setActiveTab('ai')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'ai'
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'ai'
               ? 'bg-white text-[#0B0D11] shadow-[0_0_15px_rgba(255,255,255,0.2)]'
               : 'glass-card hover:bg-white/10 text-gray-300 border border-white/10'
-          }`}
+            }`}
         >
           <Bot className="w-3.5 h-3.5" />
           <span>GG Assistant Simulator</span>
@@ -429,7 +466,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           ==================================================== */}
       {activeTab === 'dashboard' && (
         <div className="space-y-8">
-          
+
           {/* Top Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-6 rounded-2xl glass-card border border-white/15 shadow-xl space-y-2 relative overflow-hidden">
@@ -459,11 +496,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
           {/* Quick Actions & Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
+
             {/* Quick Action Column */}
             <div className="lg:col-span-4 space-y-4">
               <h3 className="font-bold text-base text-white font-serif">Quick Editorial Actions</h3>
-              
+
               <div className="space-y-3">
                 <button
                   onClick={() => {
@@ -568,10 +605,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-1 rounded text-xs font-bold ${
-                          lead.status === 'New' ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' :
-                          lead.status === 'Qualified' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-gray-300 border border-white/15'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded text-xs font-bold ${lead.status === 'New' ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' :
+                            lead.status === 'Qualified' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-gray-300 border border-white/15'
+                          }`}>
                           {lead.status}
                         </span>
                         <button
@@ -601,7 +637,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           ==================================================== */}
       {activeTab === 'interviews' && (
         <div className="space-y-6">
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-white font-serif">Globally Unscripted Articles</h2>
@@ -668,7 +704,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {interviews
-                    .filter(i => 
+                    .filter(i =>
                       i.title.toLowerCase().includes(interviewSearch.toLowerCase()) ||
                       i.executiveName.toLowerCase().includes(interviewSearch.toLowerCase()) ||
                       i.company.toLowerCase().includes(interviewSearch.toLowerCase())
@@ -701,9 +737,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           {item.publishedAt}
                         </td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            item.isPublished ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-gray-400 border border-white/10'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.isPublished ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-gray-400 border border-white/10'
+                            }`}>
                             {item.isPublished ? 'Live' : 'Draft'}
                           </span>
                         </td>
@@ -755,7 +790,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           ==================================================== */}
       {activeTab === 'leads' && (
         <div className="space-y-6">
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-white font-serif">Enterprise Inquiries & CRM</h2>
@@ -788,7 +823,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
+
             {/* Leads Table */}
             <div className="lg:col-span-8 glass-card rounded-2xl border border-white/15 overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
@@ -812,9 +847,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                             setSelectedLead(lead);
                             setLeadNoteInput(lead.notes || '');
                           }}
-                          className={`cursor-pointer transition-colors ${
-                            selectedLead?.id === lead.id ? 'bg-blue-500/15' : 'hover:bg-white/5'
-                          }`}
+                          className={`cursor-pointer transition-colors ${selectedLead?.id === lead.id ? 'bg-blue-500/15' : 'hover:bg-white/5'
+                            }`}
                         >
                           <td className="p-4">
                             <div className="font-bold text-white">{lead.name}</div>
@@ -831,11 +865,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                             </span>
                           </td>
                           <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded text-[10px] font-bold ${
-                              lead.status === 'New' ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' :
-                              lead.status === 'Qualified' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' :
-                              lead.status === 'Proposal' ? 'bg-purple-500/15 text-purple-300 border border-purple-400/30' : 'bg-white/10 text-gray-300 border border-white/10'
-                            }`}>
+                            <span className={`px-2.5 py-1 rounded text-[10px] font-bold ${lead.status === 'New' ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' :
+                                lead.status === 'Qualified' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30' :
+                                  lead.status === 'Proposal' ? 'bg-purple-500/15 text-purple-300 border border-purple-400/30' : 'bg-white/10 text-gray-300 border border-white/10'
+                              }`}>
                               {lead.status}
                             </span>
                           </td>
@@ -961,7 +994,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           ==================================================== */}
       {activeTab === 'cms' && (
         <div className="glass-card rounded-2xl border border-white/15 p-8 space-y-8 shadow-2xl">
-          
+
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div>
               <h2 className="text-xl font-bold text-white font-serif">Live Website Content CMS</h2>
@@ -978,11 +1011,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
+
             {/* Hero Configuration */}
             <div className="space-y-4">
               <h3 className="font-bold text-sm uppercase tracking-wider text-blue-400">Hero Section Copy</h3>
-              
+
               <div>
                 <label className="block text-xs font-semibold text-gray-300 mb-1">Badge Tagline</label>
                 <input
@@ -1026,7 +1059,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             {/* Who We Are & CTA */}
             <div className="space-y-4">
               <h3 className="font-bold text-sm uppercase tracking-wider text-indigo-400">Who We Are & CTA</h3>
-              
+
               <div>
                 <label className="block text-xs font-semibold text-gray-300 mb-1">Who We Are Heading</label>
                 <input
@@ -1125,7 +1158,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       {isInterviewModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="glass-card bg-[#0E1117]/95 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 border border-white/20 shadow-2xl space-y-6 animate-in fade-in-50 text-gray-200">
-            
+
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <h3 className="text-xl font-bold text-white font-serif">
                 {editingInterview.id ? 'Edit Executive Interview' : 'Create Globally Unscripted Article'}
@@ -1139,7 +1172,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
 
             <form onSubmit={handleSaveInterview} className="space-y-4 text-xs">
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-gray-300 uppercase mb-1">Executive Name *</label>
