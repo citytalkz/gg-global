@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Sparkles, 
-  X, 
-  Send, 
-  Minimize2, 
-  Maximize2, 
-  Bot, 
-  User, 
-  ArrowRight, 
-  Building2, 
-  Mail, 
-  CheckCircle2, 
-  FileText, 
+import {
+  Sparkles,
+  X,
+  Send,
+  Minimize2,
+  Maximize2,
+  Bot,
+  User,
+  ArrowRight,
+  Building2,
+  Mail,
+  CheckCircle2,
+  FileText,
   RefreshCw,
   Phone,
   Globe,
   Briefcase
 } from 'lucide-react';
 import { ChatMessage, Lead } from '../types';
+import { apiUrl } from '../config';
 
 interface ChatbotWidgetProps {
   isOpen: boolean;
@@ -93,7 +94,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -162,7 +163,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     if (!leadForm.name || !leadForm.email) return;
 
     try {
-      const res = await fetch('/api/leads', {
+      const res = await fetch(apiUrl('/api/leads'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -229,7 +230,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       {/* Floating Trigger Button (when closed) */}
       {!isOpen && (
         <div className="fixed bottom-8 right-8 z-50">
-          <div 
+          <div
             id="chatbot-floating-trigger"
             onClick={onOpen}
             className="glass-card shadow-[0_10px_35px_rgba(0,0,0,0.7)] rounded-full p-2.5 sm:p-3 flex items-center space-x-3 border border-slate-700/60 cursor-pointer hover:border-blue-400/50 hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] transition-all hover:scale-105 active:scale-95 group"
@@ -245,11 +246,11 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
 
       {/* Floating Chat Modal */}
       {isOpen && (
-        <div 
+        <div
           id="chatbot-panel"
           className="fixed bottom-8 right-8 z-50 w-[92vw] sm:w-[420px] h-[580px] max-h-[85vh] bg-[#0C1017]/95 backdrop-blur-xl rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-slate-700/60 flex flex-col overflow-hidden animate-in fade-in-50 slide-in-from-bottom-6 duration-200 text-slate-200"
         >
-          
+
           {/* Header */}
           <div className="bg-[#090C12] text-white p-4 flex items-center justify-between border-b border-slate-800/80">
             <div className="flex items-center gap-3">
@@ -325,11 +326,10 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
                   </div>
                 )}
                 <div
-                  className={`max-w-[84%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                    m.sender === 'user'
+                  className={`max-w-[84%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${m.sender === 'user'
                       ? 'bg-blue-600 text-white rounded-tr-none shadow-[0_0_15px_rgba(59,130,246,0.3)]'
                       : 'bg-slate-900/60 border border-slate-800/80 text-slate-200 rounded-tl-none backdrop-blur-sm'
-                  }`}
+                    }`}
                 >
                   <div className="font-light">{formatText(m.text)}</div>
 

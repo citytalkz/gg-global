@@ -66,6 +66,25 @@ async function startServer() {
 
   app.use(express.json());
 
+  // CORS: the frontend (Hostinger) and backend (Railway) are on different domains,
+  // so the browser needs explicit permission to call this API cross-origin.
+  // ALLOWED_ORIGINS can be a comma-separated list, set via env var; sensible defaults included.
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "https://ggglobal.in,https://www.ggglobal.in,http://localhost:3000,http://localhost:5173")
+    .split(",")
+    .map(o => o.trim());
+  app.use((req: Request, res: Response, next: () => void) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+    next();
+  });
+
   // Token storage for admin authentication.
   // Tokens are only ever added via a successful /api/admin/login — no hardcoded backdoor tokens.
   const validAdminTokens = new Set<string>();

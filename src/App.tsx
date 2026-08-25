@@ -13,6 +13,7 @@ import { ContactModal } from './components/ContactModal';
 import { VideoPlayerModal } from './components/VideoPlayerModal';
 import { initialWebsiteContent, initialInterviews } from './data/initialData';
 import { Interview, WebsiteContent } from './types';
+import { apiUrl } from './config';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<string>('home');
@@ -34,8 +35,8 @@ export default function App() {
   const loadData = async () => {
     try {
       const [resContent, resInterviews] = await Promise.all([
-        fetch('/api/content').then(r => r.ok ? r.json() : null),
-        fetch('/api/interviews').then(r => r.ok ? r.json() : null),
+        fetch(apiUrl('/api/content')).then(r => r.ok ? r.json() : null),
+        fetch(apiUrl('/api/interviews')).then(r => r.ok ? r.json() : null),
       ]);
 
       if (resContent) setContent(resContent);
@@ -164,7 +165,7 @@ export default function App() {
       {/* Ambient refined background glows */}
       <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-blue-500/[0.06] rounded-full blur-[150px] pointer-events-none -z-10"></div>
       <div className="fixed bottom-1/3 right-1/4 w-[500px] h-[500px] bg-indigo-500/[0.06] rounded-full blur-[150px] pointer-events-none -z-10"></div>
-      
+
       {/* Top Navigation */}
       <Navbar
         currentView={currentView}

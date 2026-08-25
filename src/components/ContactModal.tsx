@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, ArrowRight, Shield, Send } from 'lucide-react';
+import { apiUrl } from '../config';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/leads', {
+      const res = await fetch(apiUrl('/api/leads'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +55,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="glass-card rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 border border-slate-700/60 shadow-[0_20px_50px_rgba(0,0,0,0.8)] space-y-6 relative animate-in fade-in-50 text-slate-200">
         <div className="glass-shine-overlay opacity-30"></div>
-        
+
         <button
           onClick={onClose}
           className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition-colors z-20"

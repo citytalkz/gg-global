@@ -29,6 +29,7 @@ import {
   Building
 } from 'lucide-react';
 import { Interview, Lead, WebsiteContent } from '../types';
+import { apiUrl } from '../config';
 
 interface AdminPortalProps {
   initialInterviews: Interview[];
@@ -91,7 +92,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Fetch leads when authenticated
   const fetchLeadsWithToken = async (tok: string) => {
     try {
-      const res = await fetch('/api/leads', {
+      const res = await fetch(apiUrl('/api/leads'), {
         headers: { 'Authorization': `Bearer ${tok}` }
       });
       if (res.ok) {
@@ -110,7 +111,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setLoginError('');
     setIsLoggingIn(true);
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(apiUrl('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailInput, password: passwordInput }),
@@ -158,7 +159,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         });
       } else {
         // Create
-        res = await fetch('/api/interviews', {
+        res = await fetch(apiUrl('/api/interviews'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -217,7 +218,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleSaveWebsiteContent = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/content', {
+      const res = await fetch(apiUrl('/api/content'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +241,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleTestAi = async () => {
     setIsTestingAi(true);
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  Globe2, 
-  ShieldCheck, 
-  Users, 
-  CheckCircle2, 
-  ArrowRight, 
-  Mail, 
-  Phone, 
+import {
+  Building2,
+  Globe2,
+  ShieldCheck,
+  Users,
+  CheckCircle2,
+  ArrowRight,
+  Mail,
+  Phone,
   MapPin,
   Send,
   Sparkles
 } from 'lucide-react';
 import { WebsiteContent } from '../types';
+import { apiUrl } from '../config';
 
 interface AboutViewProps {
   content: WebsiteContent;
@@ -27,11 +28,11 @@ export const AboutView: React.FC<AboutViewProps> = ({
 }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24 relative text-slate-200">
-      
+
       {/* Soft Ambient Light Glow */}
       <div className="absolute top-10 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
       <div className="absolute top-96 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
-      
+
       {/* Hero */}
       <div className="max-w-3xl space-y-4">
         <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill border border-blue-400/30 text-blue-300 text-[11px] font-bold uppercase tracking-widest shadow-xs">
@@ -142,7 +143,7 @@ export const ContactView: React.FC<{ content: WebsiteContent }> = ({ content }) 
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/leads', {
+      const res = await fetch(apiUrl('/api/leads'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -163,10 +164,10 @@ export const ContactView: React.FC<{ content: WebsiteContent }> = ({ content }) 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16 relative text-slate-200">
-      
+
       {/* Soft Ambient Light Glow */}
       <div className="absolute top-10 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
-      
+
       <div className="max-w-3xl space-y-3">
         <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill border border-blue-400/30 text-blue-300 text-[11px] font-bold uppercase tracking-widest shadow-xs">
           Engagement Desk
@@ -180,7 +181,7 @@ export const ContactView: React.FC<{ content: WebsiteContent }> = ({ content }) 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        
+
         {/* Form */}
         <div className="lg:col-span-7 glass-card rounded-2xl p-8 sm:p-10 border border-slate-700/60 shadow-2xl relative overflow-hidden">
           <div className="glass-shine-overlay opacity-30"></div>
